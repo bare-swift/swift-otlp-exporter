@@ -39,6 +39,53 @@ extension OTLP {
         }
     }
 
+    /// `opentelemetry.proto.metrics.v1.SummaryDataPoint.ValueAtQuantile`.
+    public struct ValueAtQuantile: Sendable, Equatable {
+        public var quantile: Double
+        public var value: Double
+        public init(quantile: Double = 0.0, value: Double = 0.0) {
+            self.quantile = quantile
+            self.value = value
+        }
+    }
+
+    /// `opentelemetry.proto.metrics.v1.SummaryDataPoint`.
+    public struct SummaryDataPoint: Sendable, Equatable {
+        public var attributes: [KeyValue]
+        public var startTimeUnixNano: UInt64
+        public var timeUnixNano: UInt64
+        public var count: UInt64
+        public var sum: Double
+        public var quantileValues: [ValueAtQuantile]
+        public var flags: UInt32
+
+        public init(
+            attributes: [KeyValue] = [],
+            startTimeUnixNano: UInt64 = 0,
+            timeUnixNano: UInt64 = 0,
+            count: UInt64 = 0,
+            sum: Double = 0.0,
+            quantileValues: [ValueAtQuantile] = [],
+            flags: UInt32 = 0
+        ) {
+            self.attributes = attributes
+            self.startTimeUnixNano = startTimeUnixNano
+            self.timeUnixNano = timeUnixNano
+            self.count = count
+            self.sum = sum
+            self.quantileValues = quantileValues
+            self.flags = flags
+        }
+    }
+
+    /// `opentelemetry.proto.metrics.v1.Summary`.
+    public struct Summary: Sendable, Equatable {
+        public var dataPoints: [SummaryDataPoint]
+        public init(dataPoints: [SummaryDataPoint] = []) {
+            self.dataPoints = dataPoints
+        }
+    }
+
     /// `opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint.Buckets`.
     public struct Buckets: Sendable, Equatable {
         public var offset: Int32

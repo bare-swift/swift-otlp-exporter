@@ -165,4 +165,41 @@ enum EncodeMetrics {
         w.writeEnum(h.aggregationTemporality.rawValue, fieldNumber: 2)
         return w.finish()
     }
+
+    // MARK: - ValueAtQuantile
+    static func encodeValueAtQuantile(_ v: OTLP.ValueAtQuantile) -> Bytes {
+        var w = ProtoWriter()
+        w.writeDouble(v.quantile, fieldNumber: 1)
+        w.writeDouble(v.value, fieldNumber: 2)
+        return w.finish()
+    }
+
+    // MARK: - SummaryDataPoint
+    static func encodeSummaryDataPoint(_ dp: OTLP.SummaryDataPoint) -> Bytes {
+        var w = ProtoWriter()
+        w.writeFixed64(dp.startTimeUnixNano, fieldNumber: 2)
+        w.writeFixed64(dp.timeUnixNano, fieldNumber: 3)
+        w.writeFixed64(dp.count, fieldNumber: 4)
+        w.writeDouble(dp.sum, fieldNumber: 5)
+        for v in dp.quantileValues {
+            let vb = encodeValueAtQuantile(v)
+            w.writeMessage(vb, fieldNumber: 6)
+        }
+        for kv in dp.attributes {
+            let kvb = Encoder.encodeKeyValue(kv)
+            w.writeMessage(kvb, fieldNumber: 7)
+        }
+        w.writeUInt32(dp.flags, fieldNumber: 8)
+        return w.finish()
+    }
+
+    // MARK: - Summary
+    static func encodeSummary(_ s: OTLP.Summary) -> Bytes {
+        var w = ProtoWriter()
+        for dp in s.dataPoints {
+            let dpb = encodeSummaryDataPoint(dp)
+            w.writeMessage(dpb, fieldNumber: 1)
+        }
+        return w.finish()
+    }
 }
