@@ -56,4 +56,26 @@ enum EncodeMetrics {
         w.writeUInt32(p.flags, fieldNumber: 8)
         return w.finish()
     }
+
+    // MARK: - Gauge
+    static func encodeGauge(_ g: OTLP.Gauge) -> Bytes {
+        var w = ProtoWriter()
+        for dp in g.dataPoints {
+            let dpb = encodeNumberDataPoint(dp)
+            w.writeMessage(dpb, fieldNumber: 1)
+        }
+        return w.finish()
+    }
+
+    // MARK: - Sum
+    static func encodeSum(_ s: OTLP.Sum) -> Bytes {
+        var w = ProtoWriter()
+        for dp in s.dataPoints {
+            let dpb = encodeNumberDataPoint(dp)
+            w.writeMessage(dpb, fieldNumber: 1)
+        }
+        w.writeEnum(s.aggregationTemporality.rawValue, fieldNumber: 2)
+        w.writeBool(s.isMonotonic, fieldNumber: 3)
+        return w.finish()
+    }
 }

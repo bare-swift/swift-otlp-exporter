@@ -39,6 +39,31 @@ extension OTLP {
         }
     }
 
+    /// `opentelemetry.proto.metrics.v1.Gauge`.
+    public struct Gauge: Sendable, Equatable {
+        public var dataPoints: [NumberDataPoint]
+        public init(dataPoints: [NumberDataPoint] = []) {
+            self.dataPoints = dataPoints
+        }
+    }
+
+    /// `opentelemetry.proto.metrics.v1.Sum`.
+    public struct Sum: Sendable, Equatable {
+        public var dataPoints: [NumberDataPoint]
+        public var aggregationTemporality: AggregationTemporality
+        public var isMonotonic: Bool
+
+        public init(
+            dataPoints: [NumberDataPoint] = [],
+            aggregationTemporality: AggregationTemporality = .unspecified,
+            isMonotonic: Bool = false
+        ) {
+            self.dataPoints = dataPoints
+            self.aggregationTemporality = aggregationTemporality
+            self.isMonotonic = isMonotonic
+        }
+    }
+
     /// `opentelemetry.proto.metrics.v1.NumberDataPoint`.
     public struct NumberDataPoint: Sendable, Equatable {
         public enum Value: Sendable, Equatable {
