@@ -1,0 +1,59 @@
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Copyright (c) 2026 The bare-swift Project Authors.
+
+import Bytes
+
+/// Internal per-metric-type encoders. Each function produces the inner
+/// protobuf payload for one OTLP message; callers wrap with tag+length
+/// when embedding (via `ProtoWriter.writeMessage`).
+enum EncodeMetrics {
+    // MARK: - Exemplar
+    static func encodeExemplar(_ e: OTLP.Exemplar) -> Bytes {
+        var w = ProtoWriter()
+        w.writeFixed64(e.timeUnixNano, fieldNumber: 2)
+        if let v = e.value {
+            switch v {
+            case .asDouble(let d):
+                w.writeTag(field: 3, wireType: .i64)
+                w.writeI64(d.bitPattern)
+            case .asInt(let i):
+                w.writeTag(field: 6, wireType: .i64)
+                w.writeI64(UInt64(bitPattern: i))
+            }
+        }
+        w.writeBytes(e.spanID, fieldNumber: 4)
+        w.writeBytes(e.traceID, fieldNumber: 5)
+        for kv in e.filteredAttributes {
+            let kvb = Encoder.encodeKeyValue(kv)
+            w.writeMessage(kvb, fieldNumber: 7)
+        }
+        return w.finish()
+    }
+
+    // MARK: - NumberDataPoint
+    static func encodeNumberDataPoint(_ p: OTLP.NumberDataPoint) -> Bytes {
+        var w = ProtoWriter()
+        w.writeFixed64(p.startTimeUnixNano, fieldNumber: 2)
+        w.writeFixed64(p.timeUnixNano, fieldNumber: 3)
+        if let v = p.value {
+            switch v {
+            case .asDouble(let d):
+                w.writeTag(field: 4, wireType: .i64)
+                w.writeI64(d.bitPattern)
+            case .asInt(let i):
+                w.writeTag(field: 6, wireType: .i64)
+                w.writeI64(UInt64(bitPattern: i))
+            }
+        }
+        for e in p.exemplars {
+            let eb = encodeExemplar(e)
+            w.writeMessage(eb, fieldNumber: 5)
+        }
+        for kv in p.attributes {
+            let kvb = Encoder.encodeKeyValue(kv)
+            w.writeMessage(kvb, fieldNumber: 7)
+        }
+        w.writeUInt32(p.flags, fieldNumber: 8)
+        return w.finish()
+    }
+}

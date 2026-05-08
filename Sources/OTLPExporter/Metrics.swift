@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// Copyright (c) 2026 The bare-swift Project Authors.
+
+import Bytes
+
+extension OTLP {
+    /// `opentelemetry.proto.metrics.v1.AggregationTemporality`.
+    public enum AggregationTemporality: UInt32, Sendable, Equatable {
+        case unspecified = 0
+        case delta       = 1
+        case cumulative  = 2
+    }
+
+    /// `opentelemetry.proto.metrics.v1.Exemplar`.
+    public struct Exemplar: Sendable, Equatable {
+        public enum Value: Sendable, Equatable {
+            case asDouble(Double)
+            case asInt(Int64)
+        }
+
+        public var filteredAttributes: [KeyValue]
+        public var timeUnixNano: UInt64
+        public var value: Value?
+        public var spanID: Bytes
+        public var traceID: Bytes
+
+        public init(
+            filteredAttributes: [KeyValue] = [],
+            timeUnixNano: UInt64 = 0,
+            value: Value? = nil,
+            spanID: Bytes = Bytes(),
+            traceID: Bytes = Bytes()
+        ) {
+            self.filteredAttributes = filteredAttributes
+            self.timeUnixNano = timeUnixNano
+            self.value = value
+            self.spanID = spanID
+            self.traceID = traceID
+        }
+    }
+
+    /// `opentelemetry.proto.metrics.v1.NumberDataPoint`.
+    public struct NumberDataPoint: Sendable, Equatable {
+        public enum Value: Sendable, Equatable {
+            case asDouble(Double)
+            case asInt(Int64)
+        }
+
+        public var attributes: [KeyValue]
+        public var startTimeUnixNano: UInt64
+        public var timeUnixNano: UInt64
+        public var value: Value?
+        public var exemplars: [Exemplar]
+        public var flags: UInt32
+
+        public init(
+            attributes: [KeyValue] = [],
+            startTimeUnixNano: UInt64 = 0,
+            timeUnixNano: UInt64 = 0,
+            value: Value? = nil,
+            exemplars: [Exemplar] = [],
+            flags: UInt32 = 0
+        ) {
+            self.attributes = attributes
+            self.startTimeUnixNano = startTimeUnixNano
+            self.timeUnixNano = timeUnixNano
+            self.value = value
+            self.exemplars = exemplars
+            self.flags = flags
+        }
+    }
+}
