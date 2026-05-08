@@ -14,3 +14,12 @@ import Bytes
 /// `opentelemetry-proto/metrics/v1/metrics.proto` finds every field as a
 /// Swift property of the same name.
 public enum OTLP: Sendable {}
+
+extension OTLP {
+    /// Encode an ``OTLP/ExportMetricsServiceRequest`` to its protobuf wire form.
+    /// The returned `Bytes` is the body for `HTTP POST /v1/metrics` with
+    /// `Content-Type: application/x-protobuf`.
+    public static func encode(_ request: ExportMetricsServiceRequest) -> Bytes {
+        EncodeMetrics.encodeExportMetricsServiceRequest(request)
+    }
+}

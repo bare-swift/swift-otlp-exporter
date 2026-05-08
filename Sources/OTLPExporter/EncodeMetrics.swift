@@ -202,4 +202,78 @@ enum EncodeMetrics {
         }
         return w.finish()
     }
+
+    // MARK: - Metric (oneof data)
+    static func encodeMetric(_ m: OTLP.Metric) -> Bytes {
+        var w = ProtoWriter()
+        w.writeString(m.name, fieldNumber: 1)
+        w.writeString(m.description, fieldNumber: 2)
+        w.writeString(m.unit, fieldNumber: 3)
+        if let data = m.data {
+            switch data {
+            case .gauge(let g):
+                let gb = encodeGauge(g)
+                w.writeMessage(gb, fieldNumber: 5)
+            case .sum(let s):
+                let sb = encodeSum(s)
+                w.writeMessage(sb, fieldNumber: 7)
+            case .histogram(let h):
+                let hb = encodeHistogram(h)
+                w.writeMessage(hb, fieldNumber: 9)
+            case .exponentialHistogram(let h):
+                let hb = encodeExponentialHistogram(h)
+                w.writeMessage(hb, fieldNumber: 10)
+            case .summary(let s):
+                let sb = encodeSummary(s)
+                w.writeMessage(sb, fieldNumber: 11)
+            }
+        }
+        for kv in m.metadata {
+            let kvb = Encoder.encodeKeyValue(kv)
+            w.writeMessage(kvb, fieldNumber: 12)
+        }
+        return w.finish()
+    }
+
+    // MARK: - ScopeMetrics
+    static func encodeScopeMetrics(_ sm: OTLP.ScopeMetrics) -> Bytes {
+        var w = ProtoWriter()
+        let scopeBytes = Encoder.encodeInstrumentationScope(sm.scope)
+        if !scopeBytes.isEmpty {
+            w.writeMessage(scopeBytes, fieldNumber: 1)
+        }
+        for m in sm.metrics {
+            let mb = encodeMetric(m)
+            w.writeMessage(mb, fieldNumber: 2)
+        }
+        w.writeString(sm.schemaURL, fieldNumber: 3)
+        return w.finish()
+    }
+
+    // MARK: - ResourceMetrics
+    static func encodeResourceMetrics(_ rm: OTLP.ResourceMetrics) -> Bytes {
+        var w = ProtoWriter()
+        let resourceBytes = Encoder.encodeResource(rm.resource)
+        if !resourceBytes.isEmpty {
+            w.writeMessage(resourceBytes, fieldNumber: 1)
+        }
+        for sm in rm.scopeMetrics {
+            let smb = encodeScopeMetrics(sm)
+            w.writeMessage(smb, fieldNumber: 2)
+        }
+        w.writeString(rm.schemaURL, fieldNumber: 3)
+        return w.finish()
+    }
+
+    // MARK: - ExportMetricsServiceRequest
+    static func encodeExportMetricsServiceRequest(
+        _ req: OTLP.ExportMetricsServiceRequest
+    ) -> Bytes {
+        var w = ProtoWriter()
+        for rm in req.resourceMetrics {
+            let rmb = encodeResourceMetrics(rm)
+            w.writeMessage(rmb, fieldNumber: 1)
+        }
+        return w.finish()
+    }
 }

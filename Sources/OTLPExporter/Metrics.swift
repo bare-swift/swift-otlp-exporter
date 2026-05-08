@@ -39,6 +39,79 @@ extension OTLP {
         }
     }
 
+    /// `opentelemetry.proto.metrics.v1.Metric` — `data` is a oneof.
+    public struct Metric: Sendable, Equatable {
+        public enum Data: Sendable, Equatable {
+            case gauge(Gauge)
+            case sum(Sum)
+            case histogram(Histogram)
+            case exponentialHistogram(ExponentialHistogram)
+            case summary(Summary)
+        }
+
+        public var name: String
+        public var description: String
+        public var unit: String
+        public var data: Data?
+        public var metadata: [KeyValue]
+
+        public init(
+            name: String = "",
+            description: String = "",
+            unit: String = "",
+            data: Data? = nil,
+            metadata: [KeyValue] = []
+        ) {
+            self.name = name
+            self.description = description
+            self.unit = unit
+            self.data = data
+            self.metadata = metadata
+        }
+    }
+
+    /// `opentelemetry.proto.metrics.v1.ScopeMetrics`.
+    public struct ScopeMetrics: Sendable, Equatable {
+        public var scope: InstrumentationScope
+        public var metrics: [Metric]
+        public var schemaURL: String
+
+        public init(
+            scope: InstrumentationScope = InstrumentationScope(),
+            metrics: [Metric] = [],
+            schemaURL: String = ""
+        ) {
+            self.scope = scope
+            self.metrics = metrics
+            self.schemaURL = schemaURL
+        }
+    }
+
+    /// `opentelemetry.proto.metrics.v1.ResourceMetrics`.
+    public struct ResourceMetrics: Sendable, Equatable {
+        public var resource: Resource
+        public var scopeMetrics: [ScopeMetrics]
+        public var schemaURL: String
+
+        public init(
+            resource: Resource = Resource(),
+            scopeMetrics: [ScopeMetrics] = [],
+            schemaURL: String = ""
+        ) {
+            self.resource = resource
+            self.scopeMetrics = scopeMetrics
+            self.schemaURL = schemaURL
+        }
+    }
+
+    /// `opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest`.
+    public struct ExportMetricsServiceRequest: Sendable, Equatable {
+        public var resourceMetrics: [ResourceMetrics]
+        public init(resourceMetrics: [ResourceMetrics] = []) {
+            self.resourceMetrics = resourceMetrics
+        }
+    }
+
     /// `opentelemetry.proto.metrics.v1.SummaryDataPoint.ValueAtQuantile`.
     public struct ValueAtQuantile: Sendable, Equatable {
         public var quantile: Double
