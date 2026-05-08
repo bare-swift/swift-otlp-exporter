@@ -61,4 +61,127 @@ struct ProtoWriter {
         writeVarint(UInt64(payload.count))
         bytes.append(contentsOf: payload.storage)
     }
+
+    // MARK: - Field helpers (proto3 default omission)
+
+    /// `uint64` field. Omitted when value is 0 (proto3 default).
+    mutating func writeUInt64(_ value: UInt64, fieldNumber: UInt32) {
+        guard value != 0 else { return }
+        writeTag(field: fieldNumber, wireType: .varint)
+        writeVarint(value)
+    }
+
+    /// `uint32` field. Omitted when value is 0 (proto3 default).
+    mutating func writeUInt32(_ value: UInt32, fieldNumber: UInt32) {
+        guard value != 0 else { return }
+        writeTag(field: fieldNumber, wireType: .varint)
+        writeVarint(UInt64(value))
+    }
+
+    /// `bool` field. Omitted when false (proto3 default).
+    mutating func writeBool(_ value: Bool, fieldNumber: UInt32) {
+        guard value else { return }
+        writeTag(field: fieldNumber, wireType: .varint)
+        writeVarint(1)
+    }
+
+    /// `string` field. Omitted when empty (proto3 default).
+    mutating func writeString(_ value: String, fieldNumber: UInt32) {
+        guard !value.isEmpty else { return }
+        writeTag(field: fieldNumber, wireType: .len)
+        let utf8Bytes = Bytes(value.utf8)
+        writeLengthDelimited(utf8Bytes)
+    }
+
+    /// `bytes` field. Omitted when empty (proto3 default).
+    mutating func writeBytes(_ value: Bytes, fieldNumber: UInt32) {
+        guard !value.isEmpty else { return }
+        writeTag(field: fieldNumber, wireType: .len)
+        writeLengthDelimited(value)
+    }
+
+    /// Embedded `message` field. Caller has already encoded the inner message.
+    /// Always emits tag+length, even for an empty payload (caller decides whether to call).
+    mutating func writeMessage(_ payload: Bytes, fieldNumber: UInt32) {
+        writeTag(field: fieldNumber, wireType: .len)
+        writeLengthDelimited(payload)
+    }
+
+    /// `fixed64` field. Omitted when value is 0 (proto3 default).
+    mutating func writeFixed64(_ value: UInt64, fieldNumber: UInt32) {
+        guard value != 0 else { return }
+        writeTag(field: fieldNumber, wireType: .i64)
+        writeI64(value)
+    }
+
+    /// `fixed32` field. Omitted when value is 0 (proto3 default).
+    mutating func writeFixed32(_ value: UInt32, fieldNumber: UInt32) {
+        guard value != 0 else { return }
+        writeTag(field: fieldNumber, wireType: .i32)
+        writeI32(value)
+    }
+
+    /// `double` field. Omitted when value is exactly +0.0 (proto3 default).
+    /// NaN, +Inf, -Inf, and -0.0 are all encoded.
+    mutating func writeDouble(_ value: Double, fieldNumber: UInt32) {
+        if value == 0.0 && value.sign == .plus { return }
+        writeTag(field: fieldNumber, wireType: .i64)
+        writeI64(value.bitPattern)
+    }
+
+    /// `optional double` field (proto3 explicit-presence). Emits when `.some`,
+    /// even when value is 0.0; omits when `nil`.
+    mutating func writeOptionalDouble(_ value: Double?, fieldNumber: UInt32) {
+        guard let value = value else { return }
+        writeTag(field: fieldNumber, wireType: .i64)
+        writeI64(value.bitPattern)
+    }
+
+    /// `enum` field. Omitted when value is 0 (proto3 default — typically the
+    /// `_UNSPECIFIED` enumerator).
+    mutating func writeEnum(_ value: UInt32, fieldNumber: UInt32) {
+        guard value != 0 else { return }
+        writeTag(field: fieldNumber, wireType: .varint)
+        writeVarint(UInt64(value))
+    }
+
+    /// `sint32` field. ZigZag-encoded then varint. Omitted when value is 0.
+    mutating func writeSInt32(_ value: Int32, fieldNumber: UInt32) {
+        guard value != 0 else { return }
+        let zz: UInt32 = Varint.ZigZag.encode(value)
+        writeTag(field: fieldNumber, wireType: .varint)
+        writeVarint(UInt64(zz))
+    }
+
+    // MARK: - Packed repeated
+
+    /// Packed `repeated uint64`. Omitted when array is empty.
+    mutating func writePackedUInt64(_ values: [UInt64], fieldNumber: UInt32) {
+        guard !values.isEmpty else { return }
+        var inner = ProtoWriter()
+        for v in values { inner.writeVarint(v) }
+        let innerBytes = inner.finish()
+        writeTag(field: fieldNumber, wireType: .len)
+        writeLengthDelimited(innerBytes)
+    }
+
+    /// Packed `repeated fixed64`. Omitted when array is empty.
+    mutating func writePackedFixed64(_ values: [UInt64], fieldNumber: UInt32) {
+        guard !values.isEmpty else { return }
+        var inner = ProtoWriter()
+        for v in values { inner.writeI64(v) }
+        let innerBytes = inner.finish()
+        writeTag(field: fieldNumber, wireType: .len)
+        writeLengthDelimited(innerBytes)
+    }
+
+    /// Packed `repeated double`. Omitted when array is empty.
+    mutating func writePackedDouble(_ values: [Double], fieldNumber: UInt32) {
+        guard !values.isEmpty else { return }
+        var inner = ProtoWriter()
+        for v in values { inner.writeI64(v.bitPattern) }
+        let innerBytes = inner.finish()
+        writeTag(field: fieldNumber, wireType: .len)
+        writeLengthDelimited(innerBytes)
+    }
 }
