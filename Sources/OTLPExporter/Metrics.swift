@@ -39,6 +39,61 @@ extension OTLP {
         }
     }
 
+    /// `opentelemetry.proto.metrics.v1.HistogramDataPoint`.
+    public struct HistogramDataPoint: Sendable, Equatable {
+        public var attributes: [KeyValue]
+        public var startTimeUnixNano: UInt64
+        public var timeUnixNano: UInt64
+        public var count: UInt64
+        public var sum: Double?
+        public var bucketCounts: [UInt64]
+        public var explicitBounds: [Double]
+        public var exemplars: [Exemplar]
+        public var flags: UInt32
+        public var min: Double?
+        public var max: Double?
+
+        public init(
+            attributes: [KeyValue] = [],
+            startTimeUnixNano: UInt64 = 0,
+            timeUnixNano: UInt64 = 0,
+            count: UInt64 = 0,
+            sum: Double? = nil,
+            bucketCounts: [UInt64] = [],
+            explicitBounds: [Double] = [],
+            exemplars: [Exemplar] = [],
+            flags: UInt32 = 0,
+            min: Double? = nil,
+            max: Double? = nil
+        ) {
+            self.attributes = attributes
+            self.startTimeUnixNano = startTimeUnixNano
+            self.timeUnixNano = timeUnixNano
+            self.count = count
+            self.sum = sum
+            self.bucketCounts = bucketCounts
+            self.explicitBounds = explicitBounds
+            self.exemplars = exemplars
+            self.flags = flags
+            self.min = min
+            self.max = max
+        }
+    }
+
+    /// `opentelemetry.proto.metrics.v1.Histogram`.
+    public struct Histogram: Sendable, Equatable {
+        public var dataPoints: [HistogramDataPoint]
+        public var aggregationTemporality: AggregationTemporality
+
+        public init(
+            dataPoints: [HistogramDataPoint] = [],
+            aggregationTemporality: AggregationTemporality = .unspecified
+        ) {
+            self.dataPoints = dataPoints
+            self.aggregationTemporality = aggregationTemporality
+        }
+    }
+
     /// `opentelemetry.proto.metrics.v1.Gauge`.
     public struct Gauge: Sendable, Equatable {
         public var dataPoints: [NumberDataPoint]

@@ -78,4 +78,38 @@ enum EncodeMetrics {
         w.writeBool(s.isMonotonic, fieldNumber: 3)
         return w.finish()
     }
+
+    // MARK: - HistogramDataPoint
+    static func encodeHistogramDataPoint(_ dp: OTLP.HistogramDataPoint) -> Bytes {
+        var w = ProtoWriter()
+        w.writeFixed64(dp.startTimeUnixNano, fieldNumber: 2)
+        w.writeFixed64(dp.timeUnixNano, fieldNumber: 3)
+        w.writeFixed64(dp.count, fieldNumber: 4)
+        w.writeOptionalDouble(dp.sum, fieldNumber: 5)
+        w.writePackedFixed64(dp.bucketCounts, fieldNumber: 6)
+        w.writePackedDouble(dp.explicitBounds, fieldNumber: 7)
+        for e in dp.exemplars {
+            let eb = encodeExemplar(e)
+            w.writeMessage(eb, fieldNumber: 8)
+        }
+        for kv in dp.attributes {
+            let kvb = Encoder.encodeKeyValue(kv)
+            w.writeMessage(kvb, fieldNumber: 9)
+        }
+        w.writeUInt32(dp.flags, fieldNumber: 10)
+        w.writeOptionalDouble(dp.min, fieldNumber: 11)
+        w.writeOptionalDouble(dp.max, fieldNumber: 12)
+        return w.finish()
+    }
+
+    // MARK: - Histogram
+    static func encodeHistogram(_ h: OTLP.Histogram) -> Bytes {
+        var w = ProtoWriter()
+        for dp in h.dataPoints {
+            let dpb = encodeHistogramDataPoint(dp)
+            w.writeMessage(dpb, fieldNumber: 1)
+        }
+        w.writeEnum(h.aggregationTemporality.rawValue, fieldNumber: 2)
+        return w.finish()
+    }
 }
