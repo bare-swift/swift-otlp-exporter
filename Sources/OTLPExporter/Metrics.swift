@@ -39,6 +39,81 @@ extension OTLP {
         }
     }
 
+    /// `opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint.Buckets`.
+    public struct Buckets: Sendable, Equatable {
+        public var offset: Int32
+        public var bucketCounts: [UInt64]
+
+        public init(offset: Int32 = 0, bucketCounts: [UInt64] = []) {
+            self.offset = offset
+            self.bucketCounts = bucketCounts
+        }
+    }
+
+    /// `opentelemetry.proto.metrics.v1.ExponentialHistogramDataPoint`.
+    public struct ExponentialHistogramDataPoint: Sendable, Equatable {
+        public var attributes: [KeyValue]
+        public var startTimeUnixNano: UInt64
+        public var timeUnixNano: UInt64
+        public var count: UInt64
+        public var sum: Double
+        public var scale: Int32
+        public var zeroCount: UInt64
+        public var positive: Buckets
+        public var negative: Buckets
+        public var flags: UInt32
+        public var exemplars: [Exemplar]
+        public var min: Double?
+        public var max: Double?
+        public var zeroThreshold: Double
+
+        public init(
+            attributes: [KeyValue] = [],
+            startTimeUnixNano: UInt64 = 0,
+            timeUnixNano: UInt64 = 0,
+            count: UInt64 = 0,
+            sum: Double = 0.0,
+            scale: Int32 = 0,
+            zeroCount: UInt64 = 0,
+            positive: Buckets = Buckets(),
+            negative: Buckets = Buckets(),
+            flags: UInt32 = 0,
+            exemplars: [Exemplar] = [],
+            min: Double? = nil,
+            max: Double? = nil,
+            zeroThreshold: Double = 0.0
+        ) {
+            self.attributes = attributes
+            self.startTimeUnixNano = startTimeUnixNano
+            self.timeUnixNano = timeUnixNano
+            self.count = count
+            self.sum = sum
+            self.scale = scale
+            self.zeroCount = zeroCount
+            self.positive = positive
+            self.negative = negative
+            self.flags = flags
+            self.exemplars = exemplars
+            self.min = min
+            self.max = max
+            self.zeroThreshold = zeroThreshold
+        }
+    }
+
+    /// `opentelemetry.proto.metrics.v1.ExponentialHistogram`.
+    public struct ExponentialHistogram: Sendable, Equatable {
+        public var dataPoints: [ExponentialHistogramDataPoint]
+        public var aggregationTemporality: AggregationTemporality
+
+        public init(
+            dataPoints: [ExponentialHistogramDataPoint] = [],
+            aggregationTemporality: AggregationTemporality = .unspecified
+        ) {
+            self.dataPoints = dataPoints
+            self.aggregationTemporality = aggregationTemporality
+        }
+    }
+
     /// `opentelemetry.proto.metrics.v1.HistogramDataPoint`.
     public struct HistogramDataPoint: Sendable, Equatable {
         public var attributes: [KeyValue]

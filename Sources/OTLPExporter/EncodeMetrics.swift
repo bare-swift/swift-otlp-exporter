@@ -112,4 +112,57 @@ enum EncodeMetrics {
         w.writeEnum(h.aggregationTemporality.rawValue, fieldNumber: 2)
         return w.finish()
     }
+
+    // MARK: - Buckets
+    static func encodeBuckets(_ b: OTLP.Buckets) -> Bytes {
+        var w = ProtoWriter()
+        w.writeSInt32(b.offset, fieldNumber: 1)
+        w.writePackedUInt64(b.bucketCounts, fieldNumber: 2)
+        return w.finish()
+    }
+
+    // MARK: - ExponentialHistogramDataPoint
+    static func encodeExponentialHistogramDataPoint(
+        _ dp: OTLP.ExponentialHistogramDataPoint
+    ) -> Bytes {
+        var w = ProtoWriter()
+        for kv in dp.attributes {
+            let kvb = Encoder.encodeKeyValue(kv)
+            w.writeMessage(kvb, fieldNumber: 1)
+        }
+        w.writeFixed64(dp.startTimeUnixNano, fieldNumber: 2)
+        w.writeFixed64(dp.timeUnixNano, fieldNumber: 3)
+        w.writeFixed64(dp.count, fieldNumber: 4)
+        w.writeDouble(dp.sum, fieldNumber: 5)
+        w.writeSInt32(dp.scale, fieldNumber: 6)
+        w.writeFixed64(dp.zeroCount, fieldNumber: 7)
+        let pos = encodeBuckets(dp.positive)
+        if !pos.isEmpty {
+            w.writeMessage(pos, fieldNumber: 8)
+        }
+        let neg = encodeBuckets(dp.negative)
+        if !neg.isEmpty {
+            w.writeMessage(neg, fieldNumber: 9)
+        }
+        w.writeUInt32(dp.flags, fieldNumber: 10)
+        for e in dp.exemplars {
+            let eb = encodeExemplar(e)
+            w.writeMessage(eb, fieldNumber: 11)
+        }
+        w.writeOptionalDouble(dp.min, fieldNumber: 12)
+        w.writeOptionalDouble(dp.max, fieldNumber: 13)
+        w.writeDouble(dp.zeroThreshold, fieldNumber: 14)
+        return w.finish()
+    }
+
+    // MARK: - ExponentialHistogram
+    static func encodeExponentialHistogram(_ h: OTLP.ExponentialHistogram) -> Bytes {
+        var w = ProtoWriter()
+        for dp in h.dataPoints {
+            let dpb = encodeExponentialHistogramDataPoint(dp)
+            w.writeMessage(dpb, fieldNumber: 1)
+        }
+        w.writeEnum(h.aggregationTemporality.rawValue, fieldNumber: 2)
+        return w.finish()
+    }
 }
